@@ -44,7 +44,7 @@ const schedule = [
       {
         time: "12:30",
         title: "Buitenactiviteiten",
-        text: "Overdag naar buiten. De precieze invulling volgt, maar reken op actief en niet binnen blijven hangen.",
+        text: "Outdoor Dag in de Ardennen met mountainbiken en kanoen. Actief naar buiten en daarna terug voor pasta en pubquiz.",
         dateTime: "2026-05-30T12:30:00+02:00",
       },
       {
@@ -79,10 +79,10 @@ const schedule = [
         dateTime: "2026-05-31T13:00:00+02:00",
       },
       {
-        time: "18:00",
+        time: "17:30",
         title: "BBQ",
         text: "Samen eten bij het huis, met genoeg marge voor de zondagrijders en de rest van de avond.",
-        dateTime: "2026-05-31T18:00:00+02:00",
+        dateTime: "2026-05-31T17:30:00+02:00",
       },
       {
         time: "21:00",
@@ -185,6 +185,10 @@ const passengerToCarTag = Object.fromEntries(
 const backend = window.WOEZIK_BACKEND ?? {};
 const backendEnabled = Boolean(backend.supabaseUrl && backend.supabaseAnonKey);
 const PRESENCE_STORAGE_KEY = "woezik-presence";
+const TASK_STORAGE_KEY = "woezik-tasks";
+const SHOPPING_STORAGE_KEY = "woezik-shopping";
+const QUOTE_STORAGE_KEY = "woezik-quotes";
+const SITE_STATE_STORAGE_KEY = "woezik-site-state";
 const PRESENCE_POLL_MS = 10000;
 const appState = {
   isOrganizer: false,
@@ -195,6 +199,22 @@ const presenceState = {
   loading: false,
   error: false,
 };
+const sharedState = {
+  site: {},
+  tasks: {},
+  quotes: [],
+  shopping: [],
+  errors: {
+    site: false,
+    tasks: false,
+    quotes: false,
+    shopping: false,
+  },
+};
+const statusUiState = {
+  filter: "all",
+  unknownOnly: false,
+};
 const publicPages = ["home", "autos", "paklijst", "locatie"];
 const publicHomeActions = [
   { id: "autos", label: "Auto's" },
@@ -202,10 +222,6 @@ const publicHomeActions = [
 ];
 const organizerHomeActions = [
   { id: "status", label: "Status" },
-  { id: "programma", label: "Programma" },
-  { id: "route", label: "Route" },
-  { id: "autos", label: "Auto's" },
-  { id: "nood", label: "SOS" },
 ];
 const publicNavItems = [
   { id: "home", label: "Home" },
@@ -270,6 +286,7 @@ const packingGroups = [
       "Oplader(s)",
       "Powerbank",
       "Zaklamp",
+      "Zonnebrand creme",
       "Zonnebril",
       "Pet of cap",
       "ID of rijbewijs",
@@ -293,20 +310,21 @@ const taskGroups = [
   },
   {
     title: "Zaterdag",
-    owner: "Ontbijt- en festivalcrew",
+    owner: "Ontbijt- en activiteitenteam",
     tasks: [
       "Ontbijt met eieren regelen",
-      "Festivalplek opbouwen",
-      "Muziek en stroompunten checken",
+      "Vertrek en spullen voor de buitenactiviteiten scherp hebben",
+      "Zorgen dat iedereen om 09:00 klaarstaat voor de eerste activiteit",
       "Pastamaaltijd voorbereiden",
       "Pubquizrondes klaarzetten",
     ],
   },
   {
     title: "Zondag",
-    owner: "Activiteitenteam",
+    owner: "Festivalcrew",
     tasks: [
-      "Vertrektijd naar activiteitenlocatie bevestigen",
+      "Huisfestivalplek opbouwen",
+      "Muziek en stroompunten checken",
       "Chauffeurs scherp houden",
       "Gezamenlijk eten rond 17:30 uur voorbereiden",
       "Zondagrijders rond 19:30 uur goed weg laten komen",
@@ -459,7 +477,7 @@ const eventPages = {
   festival: [
     {
       title: "DJ-slots",
-      tag: "Line-up",
+      tag: "Zondag",
       items: ["Slot 1 volgt", "Slot 2 volgt", "Slot 3 volgt", "Open aux moment"],
     },
     {
@@ -475,23 +493,33 @@ const eventPages = {
   ],
   activiteit: [
     {
-      title: "Locatie",
-      tag: "Vast",
+      title: "Outdoor Dag",
+      tag: "Zaterdag",
       items: [
-        "Sniper Zone",
-        "Route du Barrage, 4960 Malmedy, België",
-        "Outdoor activiteitenpark in de Ardennen",
-        "Welke onderdelen we doen volgt nog",
+        "Ardennen.nl Outdoor Dag",
+        "Locatie in Comblain-au-Pont",
+        "Ongeveer 45 minuten rijden vanaf het huisje",
+        "Mountainbiken en kanoen staan voor jullie op het programma",
       ],
     },
     {
       title: "Praktisch",
       tag: "Praktisch",
       items: [
-        "Vertrektijd en auto-indeling nog bevestigen",
-        "Chauffeurs meenemen in de zondagplanning",
-        "Sportieve kleding en oude schoenen zijn slim",
-        "Website: sniper-zone.be",
+        "Om 09:00 bij de eerste activiteit zijn",
+        "Nederlandstalige begeleiding volgens aanbieder",
+        "Sportieve kleding en schoenen die vies mogen worden zijn slim",
+        "Lunch en BBQ staan op de aanbiederspagina als inbegrepen",
+      ],
+    },
+    {
+      title: "Voor jullie groep",
+      tag: "Keuze",
+      items: [
+        "Mountainbiken",
+        "Kanoen",
+        "Vertrektijd en definitieve groepsafspraak volgen via de site",
+        "Website: ardennen.nl/activiteiten/outdoor-dag",
       ],
     },
   ],
@@ -626,7 +654,7 @@ function renderHeroState() {
       "29 mei tot 1 juni in Vaux-sur-Sure. Acht slaapkamers, sauna, bubbelbad en genoeg ruimte om er een volledig teamweekend van te maken.";
     pills.innerHTML = `
       <span>Vrij 29 mei</span>
-      <span>Check-in 13:00</span>
+      <span>Aankomst 17:00</span>
       <span>18 gasten</span>
       <span>Sauna + bubbelbad</span>
     `;
@@ -637,11 +665,11 @@ function renderHeroState() {
       </div>
       <div>
         <span>Zaterdag</span>
-        <strong>Huisfestival, pasta, pubquiz</strong>
+        <strong>Buitenactiviteiten, pasta, pubquiz</strong>
       </div>
       <div>
         <span>Zondag + maandag</span>
-        <strong>Activiteit, terugrit, check-out</strong>
+        <strong>Huisfestival, BBQ, terugrit en check-out</strong>
       </div>
     `;
     contextLabel.textContent = "Locatie";
@@ -650,10 +678,10 @@ function renderHeroState() {
   }
 
   subcopy.textContent =
-    "29 mei tot 1 juni. Bosspel in het donker, huisfestival overdag, pubquiz als schadeafhandeling.";
+    "29 mei tot 1 juni. Bosspel in het donker, zaterdag naar buiten en zondag huisfestival bij het huisje.";
   pills.innerHTML = `
     <span>Vrij 29 mei</span>
-    <span>Check-in 13:00</span>
+    <span>Aankomst 17:00</span>
     <span>Weekendbase locked</span>
     <span>Unlock 17:00</span>
   `;
@@ -679,7 +707,34 @@ function renderHomeActions() {
   const root = document.querySelector("#homeActions");
   if (!root) return;
 
-  const actions = hasFullAccess() ? organizerHomeActions : publicHomeActions;
+  if (hasFullAccess()) {
+    const updatedBy = localStorage.getItem("woezik-presence-updater") || organizers[0];
+    root.innerHTML = `
+      <form class="home-status-quick" id="homeStatusForm">
+        <div class="home-status-quick-head">
+          <span class="eyebrow">Snelle actie</span>
+          <strong>Status update</strong>
+        </div>
+        <div class="home-status-quick-fields">
+          <label>
+            <span>Speler</span>
+            <select name="player">${players.map((player) => `<option value="${player}">${player}</option>`).join("")}</select>
+          </label>
+          <label>
+            <span>Status</span>
+            <select name="status">${presenceStatuses
+              .map((status) => `<option value="${status}">${status}</option>`)
+              .join("")}</select>
+          </label>
+        </div>
+        <input type="hidden" name="updatedBy" value="${updatedBy}">
+        <button type="submit">Update status</button>
+      </form>
+    `;
+    return;
+  }
+
+  const actions = publicHomeActions;
   root.innerHTML = actions.map((action) => `<button data-jump="${action.id}">${action.label}</button>`).join("");
 }
 
@@ -727,11 +782,11 @@ function renderUnlockGate() {
 
   if (appState.isOrganizer) {
     root.innerHTML = `
-      <article class="unlock-card unlock-organizer">
-        <div>
+      <article class="unlock-card unlock-organizer unlock-organizer-compact">
+        <div class="unlock-organizer-copy">
           <p class="eyebrow">Organizer preview</p>
-          <h2>Volledige site staat voor jou open.</h2>
-          <p>Voor deelnemers unlockt alles automatisch op ${unlockText}. Tot die tijd blijft de publieke versie beperkt tot auto’s en paklijst.</p>
+          <h2>Organizer actief</h2>
+          <p>Publieke unlock: ${unlockText}</p>
         </div>
         <button class="small-button secondary" id="logoutOrganizerInline" type="button">Uitloggen</button>
       </article>
@@ -814,6 +869,83 @@ function setStorage(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function getSiteStateLocal() {
+  return getStorage(SITE_STATE_STORAGE_KEY, {});
+}
+
+function setSiteStateLocal(nextState) {
+  setStorage(SITE_STATE_STORAGE_KEY, nextState);
+}
+
+function getCurrentSiteState() {
+  if (backendEnabled && Object.keys(sharedState.site).length) {
+    return sharedState.site;
+  }
+
+  return getSiteStateLocal();
+}
+
+function getSiteValue(key, fallback = "") {
+  const state = getCurrentSiteState();
+  return state[key] ?? fallback;
+}
+
+function getTaskRecords() {
+  return taskGroups.flatMap((group, groupIndex) =>
+    group.tasks.map((task, taskIndex) => ({
+      key: `${groupIndex}-${taskIndex}`,
+      groupIndex,
+      taskIndex,
+      title: group.title,
+      owner: group.owner,
+      label: task,
+    })),
+  );
+}
+
+function getTasksLocal() {
+  return getStorage(TASK_STORAGE_KEY, {});
+}
+
+function setTasksLocal(nextTasks) {
+  setStorage(TASK_STORAGE_KEY, nextTasks);
+}
+
+function getRenderableTasks() {
+  if (backendEnabled && Object.keys(sharedState.tasks).length) {
+    return sharedState.tasks;
+  }
+
+  return getTasksLocal();
+}
+
+function getShoppingLocal() {
+  return getStorage(SHOPPING_STORAGE_KEY, []);
+}
+
+function setShoppingLocal(nextItems) {
+  setStorage(SHOPPING_STORAGE_KEY, nextItems);
+}
+
+function getRenderableShopping() {
+  if (backendEnabled && sharedState.shopping.length) {
+    return sharedState.shopping;
+  }
+
+  const local = getShoppingLocal();
+  if (local.length) return local;
+
+  return shoppingItems.map((label, index) => ({
+    id: `seed-${index}`,
+    label,
+    done: false,
+    createdAt: null,
+    createdBy: null,
+    updatedAt: null,
+    updatedBy: null,
+  }));
+}
+
 function getDeviceId() {
   const existingId = localStorage.getItem("woezik-device-id");
   if (existingId) return existingId;
@@ -846,6 +978,348 @@ async function supabaseRequest(path, options = {}) {
 
   if (response.status === 204) return null;
   return response.json();
+}
+
+function normalizeSiteStateRows(rows) {
+  return (rows ?? []).reduce((map, row) => {
+    if (!row?.key) return map;
+    map[row.key] = row.value;
+    return map;
+  }, {});
+}
+
+async function fetchSharedSiteState() {
+  if (!backendEnabled) return null;
+  const rows = await supabaseRequest("/rest/v1/site_state?select=key,value,updated_at,updated_by");
+  return normalizeSiteStateRows(rows);
+}
+
+async function saveSharedSiteState(key, value, updatedBy = "Organisatie") {
+  if (!backendEnabled || !key) return;
+
+  await supabaseRequest("/rest/v1/site_state?on_conflict=key", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify([
+      {
+        key,
+        value,
+        updated_at: new Date().toISOString(),
+        updated_by: updatedBy,
+      },
+    ]),
+  });
+}
+
+async function refreshSiteState(options = {}) {
+  const local = getSiteStateLocal();
+  if (!backendEnabled) {
+    sharedState.site = local;
+    sharedState.errors.site = false;
+    return local;
+  }
+
+  try {
+    const nextState = await fetchSharedSiteState();
+    sharedState.site = nextState ?? {};
+    sharedState.errors.site = false;
+    setSiteStateLocal(sharedState.site);
+    return sharedState.site;
+  } catch (error) {
+    sharedState.errors.site = true;
+    sharedState.site = local;
+    if (!options.silent) {
+      console.error("Site state sync failed", error);
+    }
+    return local;
+  }
+}
+
+function normalizeTaskRows(rows) {
+  return (rows ?? []).reduce((map, row) => {
+    if (!row?.task_key) return map;
+    map[row.task_key] = {
+      done: Boolean(row.done),
+      updatedAt: row.updated_at ?? null,
+      updatedBy: row.updated_by ?? null,
+      label: row.label ?? null,
+      title: row.group_title ?? null,
+      owner: row.owner ?? null,
+    };
+    return map;
+  }, {});
+}
+
+async function seedSharedTasks() {
+  const rows = getTaskRecords().map((task) => ({
+    task_key: task.key,
+    group_title: task.title,
+    owner: task.owner,
+    label: task.label,
+    done: false,
+  }));
+
+  await supabaseRequest("/rest/v1/shared_tasks?on_conflict=task_key", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "resolution=ignore-duplicates,return=minimal",
+    },
+    body: JSON.stringify(rows),
+  });
+}
+
+async function fetchSharedTasks() {
+  const rows = await supabaseRequest("/rest/v1/shared_tasks?select=task_key,group_title,owner,label,done,updated_at,updated_by&order=task_key.asc");
+  if (!rows?.length) {
+    await seedSharedTasks();
+    return fetchSharedTasks();
+  }
+  return normalizeTaskRows(rows);
+}
+
+async function saveSharedTask(taskKey, done, updatedBy = "Organisatie") {
+  await supabaseRequest("/rest/v1/shared_tasks?task_key=eq." + encodeURIComponent(taskKey), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({
+      done,
+      updated_at: new Date().toISOString(),
+      updated_by: updatedBy,
+    }),
+  });
+}
+
+async function resetSharedTasks() {
+  const payload = getTaskRecords().map((task) => ({
+    task_key: task.key,
+    group_title: task.title,
+    owner: task.owner,
+    label: task.label,
+    done: false,
+    updated_at: null,
+    updated_by: null,
+  }));
+
+  await supabaseRequest("/rest/v1/shared_tasks?on_conflict=task_key", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function refreshTasks(options = {}) {
+  const local = getTasksLocal();
+  if (!backendEnabled) {
+    sharedState.tasks = local;
+    sharedState.errors.tasks = false;
+    renderTaskMode();
+    renderTasks();
+    renderHomeDashboard();
+    return local;
+  }
+
+  try {
+    const nextTasks = await fetchSharedTasks();
+    sharedState.tasks = nextTasks ?? {};
+    sharedState.errors.tasks = false;
+    setTasksLocal(sharedState.tasks);
+  } catch (error) {
+    sharedState.errors.tasks = true;
+    sharedState.tasks = local;
+    if (!options.silent) {
+      console.error("Task sync failed", error);
+    }
+  }
+
+  renderTaskMode();
+  renderTasks();
+  renderHomeDashboard();
+  return sharedState.tasks;
+}
+
+function normalizeShoppingRows(rows) {
+  return (rows ?? []).map((row) => ({
+    id: row.id,
+    label: row.label,
+    done: Boolean(row.done),
+    createdAt: row.created_at ?? null,
+    createdBy: row.created_by ?? null,
+    updatedAt: row.updated_at ?? null,
+    updatedBy: row.updated_by ?? null,
+  }));
+}
+
+async function seedSharedShopping() {
+  const rows = shoppingItems.map((label) => ({
+    label,
+    done: false,
+    created_by: "Organisatie",
+  }));
+
+  await supabaseRequest("/rest/v1/shared_shopping_items", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify(rows),
+  });
+}
+
+async function fetchSharedShopping() {
+  const rows = await supabaseRequest(
+    "/rest/v1/shared_shopping_items?select=id,label,done,created_at,created_by,updated_at,updated_by&order=created_at.asc",
+  );
+  if (!rows?.length) {
+    await seedSharedShopping();
+    return fetchSharedShopping();
+  }
+  return normalizeShoppingRows(rows);
+}
+
+async function saveSharedShoppingItem(label, createdBy = "Organisatie") {
+  await supabaseRequest("/rest/v1/shared_shopping_items", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify([
+      {
+        label,
+        done: false,
+        created_by: createdBy,
+      },
+    ]),
+  });
+}
+
+async function updateSharedShoppingItem(id, done, updatedBy = "Organisatie") {
+  await supabaseRequest("/rest/v1/shared_shopping_items?id=eq." + encodeURIComponent(id), {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({
+      done,
+      updated_at: new Date().toISOString(),
+      updated_by: updatedBy,
+    }),
+  });
+}
+
+async function deleteSharedShoppingItem(id) {
+  await supabaseRequest("/rest/v1/shared_shopping_items?id=eq." + encodeURIComponent(id), {
+    method: "DELETE",
+    headers: {
+      Prefer: "return=minimal",
+    },
+  });
+}
+
+async function refreshShopping(options = {}) {
+  const local = getShoppingLocal();
+  if (!backendEnabled) {
+    sharedState.shopping = local;
+    sharedState.errors.shopping = false;
+    renderShoppingMode();
+    renderShoppingList();
+    return local;
+  }
+
+  try {
+    sharedState.shopping = (await fetchSharedShopping()) ?? [];
+    sharedState.errors.shopping = false;
+    setShoppingLocal(sharedState.shopping);
+  } catch (error) {
+    sharedState.errors.shopping = true;
+    sharedState.shopping = local;
+    if (!options.silent) {
+      console.error("Shopping sync failed", error);
+    }
+  }
+
+  renderShoppingMode();
+  renderShoppingList();
+  return sharedState.shopping;
+}
+
+async function fetchSharedQuotes() {
+  return supabaseRequest("/rest/v1/shared_quotes?select=id,text,person,created_at,created_by&order=created_at.desc");
+}
+
+async function saveSharedQuote(text, person, createdBy = "Onbekend") {
+  await supabaseRequest("/rest/v1/shared_quotes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify([
+      {
+        text,
+        person,
+        created_at: new Date().toISOString(),
+        created_by: createdBy,
+      },
+    ]),
+  });
+}
+
+async function deleteSharedQuote(id) {
+  await supabaseRequest("/rest/v1/shared_quotes?id=eq." + encodeURIComponent(id), {
+    method: "DELETE",
+    headers: {
+      Prefer: "return=minimal",
+    },
+  });
+}
+
+async function refreshQuotes(options = {}) {
+  const local = getQuotes();
+  if (!backendEnabled) {
+    sharedState.quotes = local;
+    sharedState.errors.quotes = false;
+    renderQuotes();
+    renderAdmin();
+    return local;
+  }
+
+  try {
+    sharedState.quotes = (await fetchSharedQuotes()) ?? [];
+    sharedState.errors.quotes = false;
+    setQuotes(sharedState.quotes);
+  } catch (error) {
+    sharedState.errors.quotes = true;
+    sharedState.quotes = local;
+    if (!options.silent) {
+      console.error("Quote sync failed", error);
+    }
+  }
+
+  renderQuotes();
+  renderAdmin();
+  return sharedState.quotes;
+}
+
+async function resetSharedPresence() {
+  await supabaseRequest("/rest/v1/presence_status?player=not.is.null", {
+    method: "DELETE",
+    headers: {
+      Prefer: "return=minimal",
+    },
+  });
 }
 
 async function saveSharedVote(award, player) {
@@ -914,8 +1388,9 @@ function renderSchedule() {
   const now = Date.now();
   const currentIndex = getCurrentEventIndex(now);
   const root = document.querySelector("#schedule");
+  const mergedSchedule = getMergedSchedule();
 
-  root.innerHTML = schedule
+  root.innerHTML = mergedSchedule
     .map((day, dayIndex) => {
       const events = day.events
         .map((event, eventIndex) => {
@@ -947,7 +1422,7 @@ function renderSchedule() {
 }
 
 function getAllEvents() {
-  return schedule.flatMap((day, dayIndex) =>
+  return getMergedSchedule().flatMap((day, dayIndex) =>
     day.events.map((event, eventIndex) => ({
       ...event,
       day: day.day,
@@ -968,6 +1443,9 @@ function getCurrentEventIndex(now) {
 }
 
 function renderNextEvent() {
+  const root = document.querySelector("#nextEvent");
+  if (!root) return;
+
   const now = Date.now();
   const event = getNextEvent();
   const date = new Intl.DateTimeFormat("nl-NL", {
@@ -978,7 +1456,7 @@ function renderNextEvent() {
     minute: "2-digit",
   }).format(new Date(event.dateTime));
 
-  document.querySelector("#nextEvent").innerHTML = `
+  root.innerHTML = `
     <span>${date}</span>
     <strong>${event.title}</strong>
     <p>${event.text}</p>
@@ -990,8 +1468,30 @@ function getNextEvent() {
   return getAllEvents().find((item) => item.timestamp > now) ?? getAllEvents().at(-1);
 }
 
+function getScheduleOverrides() {
+  return getSiteValue("schedule_overrides", {});
+}
+
+function getMergedSchedule() {
+  const overrides = getScheduleOverrides();
+
+  return schedule.map((day, dayIndex) => ({
+    ...day,
+    events: day.events.map((event, eventIndex) => {
+      const override = overrides[`${dayIndex}-${eventIndex}`] ?? {};
+      return {
+        ...event,
+        ...override,
+      };
+    }),
+  }));
+}
+
 function renderPlayers() {
-  document.querySelector("#players").innerHTML = players
+  const root = document.querySelector("#players");
+  if (!root) return;
+
+  root.innerHTML = players
     .map((player, index) => {
       const tags = [
         organizers.includes(player) ? "Organisatie" : "",
@@ -1045,7 +1545,7 @@ function renderPackingList() {
 }
 
 function renderTasks() {
-  const checked = getStorage("woezik-tasks", {});
+  const taskState = getRenderableTasks();
   document.querySelector("#taskBoard").innerHTML = taskGroups
     .map(
       (group, groupIndex) => `
@@ -1058,10 +1558,21 @@ function renderTasks() {
             ${group.tasks
               .map((task, taskIndex) => {
                 const key = `${groupIndex}-${taskIndex}`;
+                const entry = taskState[key] ?? {};
+                const done = backendEnabled && Object.keys(sharedState.tasks).length ? entry.done : Boolean(entry);
                 return `
-                  <label class="check-item ${checked[key] ? "done" : ""}">
-                    <input type="checkbox" data-task="${key}" ${checked[key] ? "checked" : ""}>
+                  <label class="check-item ${done ? "done" : ""}">
+                    <input type="checkbox" data-task="${key}" ${done ? "checked" : ""}>
                     <span>${task}</span>
+                    ${
+                      entry.updatedAt
+                        ? `<small class="check-meta">${entry.updatedBy ? `Door ${entry.updatedBy}` : "Bijgewerkt"} · ${new Intl.DateTimeFormat("nl-NL", {
+                            weekday: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }).format(new Date(entry.updatedAt))}</small>`
+                        : ""
+                    }
                   </label>
                 `;
               })
@@ -1088,17 +1599,54 @@ function renderMealPlan() {
 }
 
 function renderShoppingList() {
-  const checked = getStorage("woezik-shopping", {});
-  document.querySelector("#shoppingList").innerHTML = shoppingItems
-    .map(
-      (item, index) => `
-        <label class="check-item ${checked[index] ? "done" : ""}">
-          <input type="checkbox" data-shopping="${index}" ${checked[index] ? "checked" : ""}>
-          <span>${item}</span>
-        </label>
-      `,
-    )
-    .join("");
+  const root = document.querySelector("#shoppingList");
+  if (!root) return;
+
+  const items = getRenderableShopping();
+  root.innerHTML = items.length
+    ? items
+        .map(
+          (item) => `
+            <label class="check-item ${item.done ? "done" : ""}">
+              <input type="checkbox" data-shopping="${item.id}" ${item.done ? "checked" : ""}>
+              <span>
+                ${item.label}
+                ${
+                  item.updatedAt
+                    ? `<small class="check-meta">${item.updatedBy ? `Door ${item.updatedBy}` : "Bijgewerkt"} · ${new Intl.DateTimeFormat("nl-NL", {
+                        weekday: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }).format(new Date(item.updatedAt))}</small>`
+                    : item.createdBy
+                      ? `<small class="check-meta">Toegevoegd door ${item.createdBy}</small>`
+                      : ""
+                }
+              </span>
+              <button class="ghost-button subtle mini-delete" type="button" data-delete-shopping="${item.id}" aria-label="Verwijder ${item.label}" title="Verwijder ${item.label}">
+                <span aria-hidden="true">×</span>
+              </button>
+            </label>
+          `,
+        )
+        .join("")
+    : '<p class="mode-note">Nog geen boodschappen op de lijst.</p>';
+}
+
+function renderShoppingMode() {
+  const note = document.querySelector("#shoppingMode");
+  if (!note) return;
+
+  if (backendEnabled && !sharedState.errors.shopping) {
+    note.textContent = "Gedeelde boodschappenlijst. Iedereen kan items toevoegen, afvinken en verwijderen.";
+    note.classList.add("is-live");
+    note.classList.remove("is-local");
+    return;
+  }
+
+  note.textContent = "Boodschappenlijst staat lokaal op dit apparaat. Voeg Supabase toe voor gedeeld gebruik.";
+  note.classList.add("is-local");
+  note.classList.remove("is-live");
 }
 
 function renderRules() {
@@ -1136,16 +1684,23 @@ function renderBingo() {
 
 function renderPhotos() {
   const photos = getStorage("woezik-photos", []);
-  document.querySelector("#photoGrid").innerHTML = photos
+  const root = document.querySelector("#photoGrid");
+  if (!root) return;
+
+  root.innerHTML = photos
     .map((photo) => `<img src="${photo}" alt="Geüpload weekendmoment">`)
     .join("");
 }
 
 function getOpenTaskCount() {
-  const checked = getStorage("woezik-tasks", {});
+  const taskState = getRenderableTasks();
   return taskGroups.reduce(
     (count, group, groupIndex) =>
-      count + group.tasks.filter((_, taskIndex) => !checked[`${groupIndex}-${taskIndex}`]).length,
+      count +
+      group.tasks.filter((_, taskIndex) => {
+        const entry = taskState[`${groupIndex}-${taskIndex}`];
+        return backendEnabled && Object.keys(sharedState.tasks).length ? !entry?.done : !entry;
+      }).length,
     0,
   );
 }
@@ -1156,14 +1711,14 @@ function renderHomeDashboard() {
 
   const next = getNextEvent();
   const openTasks = getOpenTaskCount();
-  const customAlert = localStorage.getItem("woezik-alert");
+  const customAlert = getSiteValue("home_alert", "").trim();
   const sundayCars = carAssignments.filter((car) => car.duration === "Vrijdag t/m zondag").length;
   const mondayCars = carAssignments.filter((car) => car.duration === "Vrijdag t/m maandag").length;
 
   root.innerHTML = `
     <article class="dashboard-card dashboard-alert">
       <span>Alert</span>
-      <strong>${customAlert || "Vrijdag aankomst rond 13:00, daarna boodschappen, bosroute en burgers."}</strong>
+      <strong>${customAlert || "Vrijdag aankomst vanaf 17:00, daarna boodschappen, bosroute en burgers."}</strong>
       <p>Gebruik deze site vooral voor programma, route, vervoer, SOS en praktische info.</p>
     </article>
     <article class="dashboard-card">
@@ -1189,7 +1744,7 @@ function renderHomeLiveBanner() {
   if (!root) return;
 
   const next = getNextEvent();
-  const customAlert = localStorage.getItem("woezik-alert")?.trim();
+  const customAlert = getSiteValue("home_alert", "").trim();
   const alertText = customAlert || `Volgende moment: ${next.title} op ${next.day} om ${next.time}.`;
 
   root.innerHTML = `
@@ -1208,13 +1763,41 @@ function renderHomeLiveBanner() {
   `;
 }
 
+function renderTaskMode() {
+  const note = document.querySelector("#taskMode");
+  if (!note) return;
+
+  if (backendEnabled && !sharedState.errors.tasks) {
+    note.textContent = "Gedeeld takenbord. Iedereen ziet dezelfde checks en laatste updates.";
+    note.classList.add("is-live");
+    note.classList.remove("is-local");
+    return;
+  }
+
+  note.textContent = "Taken staan lokaal op dit apparaat. Run de Supabase upgrade om dit bord te delen.";
+  note.classList.add("is-local");
+  note.classList.remove("is-live");
+}
+
+function renderSleepNotes() {
+  const note = getSiteValue(
+    "sleep_plan_note",
+    "Deze onderdelen blijven bewust als placeholders staan tot de details zeker zijn.",
+  );
+  const inline = getSiteValue("sleep_plan_inline", "Nog te bepalen");
+  const noteNode = document.querySelector("#sleepPlanNote");
+  const inlineNode = document.querySelector("#sleepPlanInline");
+  if (noteNode) noteNode.textContent = note;
+  if (inlineNode) inlineNode.textContent = inline;
+}
+
 function unlockAdmin() {
   const input = document.querySelector("#adminCode");
   const panel = document.querySelector("#adminPanel");
   const lock = document.querySelector("#adminLock");
   if (!input || !panel || !lock) return;
 
-  if (input.value === "Woezik3") {
+  if (input.value === ORGANIZER_PASSWORD) {
     panel.hidden = false;
     lock.hidden = true;
     localStorage.setItem("woezik-admin-open", "true");
@@ -1225,12 +1808,55 @@ function renderAdmin() {
   const panel = document.querySelector("#adminPanel");
   const lock = document.querySelector("#adminLock");
   const form = document.querySelector("#alertForm");
-  if (!panel || !lock || !form) return;
+  const sleepForm = document.querySelector("#sleepPlanForm");
+  const scheduleForm = document.querySelector("#scheduleForm");
+  const quoteList = document.querySelector("#adminQuoteList");
+  if (!panel || !lock || !form || !sleepForm || !scheduleForm || !quoteList) return;
 
   const open = localStorage.getItem("woezik-admin-open") === "true";
   panel.hidden = !open;
   lock.hidden = open;
-  form.alert.value = localStorage.getItem("woezik-alert") || "";
+  form.alert.value = getSiteValue("home_alert", "");
+  sleepForm.sleepPlan.value = getSiteValue("sleep_plan_note", "");
+
+  const events = getAllEvents();
+  const currentEventId = scheduleForm.eventId.value || "0-0";
+  scheduleForm.eventId.innerHTML = events
+    .map(
+      (event) =>
+        `<option value="${event.dayIndex}-${event.eventIndex}">${event.day} ${event.time} · ${event.title}</option>`,
+    )
+    .join("");
+  scheduleForm.eventId.value = events.some((event) => `${event.dayIndex}-${event.eventIndex}` === currentEventId)
+    ? currentEventId
+    : `${events[0].dayIndex}-${events[0].eventIndex}`;
+
+  const overrides = getScheduleOverrides();
+  const selected = events.find(
+    (event) => `${event.dayIndex}-${event.eventIndex}` === scheduleForm.eventId.value,
+  );
+  const override = overrides[scheduleForm.eventId.value] ?? {};
+  scheduleForm.time.value = override.time ?? selected?.time ?? "";
+  scheduleForm.title.value = override.title ?? selected?.title ?? "";
+  scheduleForm.text.value = override.text ?? selected?.text ?? "";
+
+  const quotes = backendEnabled && sharedState.quotes.length ? sharedState.quotes : getQuotes();
+  quoteList.innerHTML = quotes.length
+    ? quotes
+        .slice(0, 8)
+        .map(
+          (quote) => `
+            <article class="admin-quote-item">
+              <div>
+                <strong>${quote.person}</strong>
+                <p>"${quote.text}"</p>
+              </div>
+              <button class="ghost-button subtle" type="button" data-delete-quote="${quote.id ?? quote.at}">Verwijder</button>
+            </article>
+          `,
+        )
+        .join("")
+    : '<p class="mode-note">Nog geen quotes om te beheren.</p>';
 }
 
 function renderCars() {
@@ -1274,11 +1900,11 @@ function renderCars() {
 }
 
 function getQuotes() {
-  return getStorage("woezik-quotes", []);
+  return getStorage(QUOTE_STORAGE_KEY, []);
 }
 
 function setQuotes(quotes) {
-  setStorage("woezik-quotes", quotes.slice(0, 40));
+  setStorage(QUOTE_STORAGE_KEY, quotes.slice(0, 80));
 }
 
 function renderQuoteForm() {
@@ -1291,11 +1917,24 @@ function renderQuoteForm() {
   ].join("");
 }
 
+function renderShoppingForm() {
+  const form = document.querySelector("#shoppingForm");
+  if (!form) return;
+
+  form.addedBy.innerHTML = [
+    ...organizers.map((name) => `<option value="${name}">${name}</option>`),
+    ...players
+      .filter((player) => !organizers.includes(player))
+      .map((name) => `<option value="${name}">${name}</option>`),
+  ].join("");
+  form.addedBy.value = localStorage.getItem("woezik-presence-updater") || organizers[0];
+}
+
 function renderQuotes() {
   const root = document.querySelector("#quoteList");
   if (!root) return;
 
-  const quotes = getQuotes();
+  const quotes = backendEnabled && sharedState.quotes.length ? sharedState.quotes : getQuotes();
   root.innerHTML = quotes.length
     ? quotes
         .map(
@@ -1308,7 +1947,7 @@ function renderQuotes() {
                   weekday: "short",
                   hour: "2-digit",
                   minute: "2-digit",
-                }).format(new Date(quote.at))}</span>
+                }).format(new Date(quote.created_at ?? quote.at))}${quote.created_by ? ` · ${quote.created_by}` : ""}</span>
               </div>
             </article>
           `,
@@ -1366,7 +2005,7 @@ function getPresenceSourceLabel() {
   if (backendEnabled) {
     if (presenceState.error) return "Live status kon niet laden. Laatste bekende lokale fallback wordt getoond.";
     if (presenceState.loading && !Object.keys(presenceState.entries).length) return "Live status wordt geladen...";
-    return "Live voor iedereen. Updates worden gedeeld via Supabase.";
+    return "Live voor iedereen. Updates worden gedeeld via Supabase, inclusief wie het laatst heeft aangepast.";
   }
 
   return "Alleen lokaal op dit apparaat. Voeg Supabase toe in config.js om dit gedeeld live te maken.";
@@ -1408,7 +2047,7 @@ async function fetchSharedPresence() {
   return normalizePresenceRows(rows);
 }
 
-async function saveSharedPresence(player, status) {
+async function saveSharedPresence(player, status, updatedBy = "Organisatie") {
   if (!backendEnabled || !player || !status) return;
 
   await supabaseRequest("/rest/v1/presence_status?on_conflict=player", {
@@ -1422,7 +2061,7 @@ async function saveSharedPresence(player, status) {
         player,
         status,
         updated_at: new Date().toISOString(),
-        updated_by: getDeviceId(),
+        updated_by: updatedBy,
       },
     ]),
   });
@@ -1461,29 +2100,133 @@ async function refreshPresence(options = {}) {
 
 function renderStatusForm() {
   const form = document.querySelector("#statusForm");
+  const filter = document.querySelector("#statusFilter");
   if (!form) return;
 
   form.player.innerHTML = players.map((player) => `<option value="${player}">${player}</option>`).join("");
   form.status.innerHTML = presenceStatuses.map((status) => `<option value="${status}">${status}</option>`).join("");
+  form.updatedBy.innerHTML = [
+    ...organizers.map((name) => `<option value="${name}">${name}</option>`),
+    ...players
+      .filter((player) => !organizers.includes(player))
+      .map((name) => `<option value="${name}">${name}</option>`),
+  ].join("");
+  form.updatedBy.value = localStorage.getItem("woezik-presence-updater") || organizers[0];
+
+  if (filter) {
+    filter.innerHTML = [
+      '<option value="all">Alle statussen</option>',
+      ...presenceStatuses.map((status) => `<option value="${status}">${status}</option>`),
+    ].join("");
+    filter.value = statusUiState.filter;
+  }
+
+  const unknownOnly = document.querySelector("#unknownOnly");
+  if (unknownOnly) unknownOnly.checked = statusUiState.unknownOnly;
+}
+
+function submitPresenceUpdate(player, status, updatedBy) {
+  if (!player || !status || !updatedBy) return;
+
+  const nextEntry = {
+    status,
+    at: new Date().toISOString(),
+    updatedBy,
+  };
+  localStorage.setItem("woezik-presence-updater", updatedBy);
+  const presence = getPresence();
+  presence[player] = nextEntry;
+  setPresence(presence);
+  presenceState.entries = {
+    ...getRenderablePresence(),
+    [player]: nextEntry,
+  };
+  renderPresence();
+  renderStatusMode();
+  renderHomeActions();
+
+  if (backendEnabled) {
+    saveSharedPresence(player, status, updatedBy)
+      .then(() => refreshPresence({ silent: true }))
+      .catch((error) => {
+        presenceState.error = true;
+        renderStatusMode();
+        console.error("Presence save failed", error);
+      });
+  }
 }
 
 function renderPresence() {
   const root = document.querySelector("#statusGrid");
+  const summary = document.querySelector("#presenceSummary");
+  const recent = document.querySelector("#presenceRecent");
   if (!root) return;
 
   const presence = getRenderablePresence();
-  root.innerHTML = players
-    .map((player) => {
-      const entry = presence[player];
-      return `
-        <article class="presence-card">
-          <h2>${player}</h2>
-          <span>${entry?.status ?? "Nog onbekend"}</span>
-          <p>${entry ? new Intl.DateTimeFormat("nl-NL", {
+  const allEntries = players.map((player) => ({
+    player,
+    entry: presence[player] ?? null,
+  }));
+  const unknownCount = allEntries.filter(({ entry }) => !entry?.status).length;
+  const recentChanges = allEntries
+    .filter(({ entry }) => entry?.at)
+    .sort((a, b) => new Date(b.entry.at).getTime() - new Date(a.entry.at).getTime())
+    .slice(0, 5);
+  const filteredEntries = allEntries.filter(({ entry }) => {
+    if (statusUiState.unknownOnly) return !entry?.status;
+    if (statusUiState.filter === "all") return true;
+    return entry?.status === statusUiState.filter;
+  });
+
+  if (summary) {
+    summary.innerHTML = `
+      <article>
+        <h3>Nog onbekend</h3>
+        <p>${unknownCount} speler${unknownCount === 1 ? "" : "s"} heeft nog geen status.</p>
+      </article>
+      <article>
+        <h3>Laatste update</h3>
+        <p>${recentChanges[0] ? `${recentChanges[0].player} · ${recentChanges[0].entry.status}` : "Nog geen updates"}</p>
+      </article>
+    `;
+  }
+
+  if (recent) {
+    recent.innerHTML = recentChanges.length
+      ? recentChanges
+          .map(
+            ({ player, entry }) => `
+              <article class="recent-item">
+                <strong>${player}</strong>
+                <span>${entry.status}</span>
+                <small>${entry.updatedBy ? `Door ${entry.updatedBy} · ` : ""}${new Intl.DateTimeFormat("nl-NL", {
+                  weekday: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(entry.at))}</small>
+              </article>
+            `,
+          )
+          .join("")
+      : '<p class="mode-note">Nog geen recente wijzigingen.</p>';
+  }
+
+  root.innerHTML = filteredEntries
+    .map(({ player, entry }) => {
+      const updatedAt = entry?.at
+        ? new Intl.DateTimeFormat("nl-NL", {
             weekday: "short",
             hour: "2-digit",
             minute: "2-digit",
-          }).format(new Date(entry.at)) : "Geen update"}</p>
+          }).format(new Date(entry.at))
+        : "Geen update";
+      const isRecent = entry?.at ? Date.now() - new Date(entry.at).getTime() < 45 * 60 * 1000 : false;
+      return `
+        <article class="presence-card ${isRecent ? "is-recent" : ""}">
+          <h2>${player}</h2>
+          <span>${entry?.status ?? "Nog onbekend"}</span>
+          <p>${updatedAt}</p>
+          <small>${entry?.updatedBy ? `Laatst door ${entry.updatedBy}` : "Nog niemand heeft dit bijgewerkt"}</small>
         </article>
       `;
     })
@@ -1499,8 +2242,28 @@ function startPresencePolling() {
   }, PRESENCE_POLL_MS);
 }
 
+function startSharedPolling() {
+  window.setInterval(() => {
+    if (!backendEnabled || !hasFullAccess()) return;
+    refreshSiteState({ silent: true }).then(() => {
+      renderSleepNotes();
+      renderHomeLiveBanner();
+      renderHomeDashboard();
+      renderSchedule();
+      renderNextEvent();
+      renderAdmin();
+    });
+    refreshTasks({ silent: true });
+    refreshShopping({ silent: true });
+    refreshQuotes({ silent: true });
+  }, PRESENCE_POLL_MS);
+}
+
 function renderQuizRounds() {
-  document.querySelector("#quizRounds").innerHTML = quizRounds
+  const root = document.querySelector("#quizRounds");
+  if (!root) return;
+
+  root.innerHTML = quizRounds
     .map(
       (round, index) => `
         <article class="quiz-card">
@@ -1515,8 +2278,11 @@ function renderQuizRounds() {
 }
 
 function renderRandomFact() {
+  const root = document.querySelector("#randomFact");
+  if (!root) return;
+
   const fact = teamFacts[Math.floor(Math.random() * teamFacts.length)];
-  document.querySelector("#randomFact").innerHTML = `<p>${fact}</p>`;
+  root.innerHTML = `<p>${fact}</p>`;
 }
 
 function updateCountdown() {
@@ -1599,16 +2365,44 @@ function bindEvents() {
       renderAdmin();
     }
 
+    const deleteShopping = event.target.closest("[data-delete-shopping]");
+    if (deleteShopping) {
+      const itemId = deleteShopping.dataset.deleteShopping;
+      if (backendEnabled) {
+        deleteSharedShoppingItem(itemId)
+          .then(() => refreshShopping({ silent: true }))
+          .catch((error) => console.error("Shopping delete failed", error));
+      } else {
+        setShoppingLocal(getRenderableShopping().filter((item) => item.id !== itemId));
+        renderShoppingList();
+      }
+    }
+
+    const deleteQuote = event.target.closest("[data-delete-quote]");
+    if (deleteQuote) {
+      const quoteId = deleteQuote.dataset.deleteQuote;
+      if (backendEnabled) {
+        deleteSharedQuote(quoteId)
+          .then(() => refreshQuotes({ silent: true }))
+          .catch((error) => console.error("Quote delete failed", error));
+      } else {
+        setQuotes(getQuotes().filter((quote) => (quote.id ?? quote.at) !== quoteId));
+        renderQuotes();
+        renderAdmin();
+      }
+    }
+
     if (event.target.closest("#clearLocalData")) {
       [
         "woezik-packing",
-        "woezik-tasks",
-        "woezik-shopping",
+        TASK_STORAGE_KEY,
+        SHOPPING_STORAGE_KEY,
         "woezik-bingo",
         "woezik-photos",
-        "woezik-quotes",
+        QUOTE_STORAGE_KEY,
         PRESENCE_STORAGE_KEY,
         "woezik-alert",
+        SITE_STATE_STORAGE_KEY,
       ].forEach((key) => localStorage.removeItem(key));
 
       renderSchedule();
@@ -1616,9 +2410,12 @@ function bindEvents() {
       renderHomeLiveBanner();
       renderHomeDashboard();
       renderPackingList();
+      renderTaskMode();
       renderTasks();
+      renderShoppingMode();
       renderShoppingList();
       renderBingo();
+      renderSleepNotes();
       renderQuotes();
       refreshPresence({ silent: true });
       renderAdmin();
@@ -1634,17 +2431,77 @@ function bindEvents() {
     }
 
     if (event.target.matches("[data-task]")) {
-      const checked = getStorage("woezik-tasks", {});
-      checked[event.target.dataset.task] = event.target.checked;
-      setStorage("woezik-tasks", checked);
-      renderTasks();
+      const taskKey = event.target.dataset.task;
+      const updatedBy = localStorage.getItem("woezik-presence-updater") || "Organisatie";
+
+      if (backendEnabled) {
+        const nextTasks = {
+          ...getRenderableTasks(),
+          [taskKey]: {
+            ...(getRenderableTasks()[taskKey] ?? {}),
+            done: event.target.checked,
+            updatedAt: new Date().toISOString(),
+            updatedBy,
+          },
+        };
+        sharedState.tasks = nextTasks;
+        renderTasks();
+        renderHomeDashboard();
+        saveSharedTask(taskKey, event.target.checked, updatedBy)
+          .then(() => refreshTasks({ silent: true }))
+          .catch((error) => {
+            sharedState.errors.tasks = true;
+            console.error("Task save failed", error);
+            renderTaskMode();
+          });
+      } else {
+        const checked = getTasksLocal();
+        checked[taskKey] = event.target.checked;
+        setTasksLocal(checked);
+        renderTasks();
+        renderHomeDashboard();
+      }
     }
 
     if (event.target.matches("[data-shopping]")) {
-      const checked = getStorage("woezik-shopping", {});
-      checked[event.target.dataset.shopping] = event.target.checked;
-      setStorage("woezik-shopping", checked);
-      renderShoppingList();
+      const itemId = event.target.dataset.shopping;
+      const updatedBy = localStorage.getItem("woezik-presence-updater") || "Organisatie";
+
+      if (backendEnabled) {
+        sharedState.shopping = getRenderableShopping().map((item) =>
+          item.id === itemId
+            ? { ...item, done: event.target.checked, updatedAt: new Date().toISOString(), updatedBy }
+            : item,
+        );
+        renderShoppingList();
+        updateSharedShoppingItem(itemId, event.target.checked, updatedBy)
+          .then(() => refreshShopping({ silent: true }))
+          .catch((error) => {
+            sharedState.errors.shopping = true;
+            console.error("Shopping save failed", error);
+            renderShoppingMode();
+          });
+      } else {
+        const nextItems = getRenderableShopping().map((item) =>
+          item.id === itemId ? { ...item, done: event.target.checked, updatedAt: new Date().toISOString(), updatedBy } : item,
+        );
+        setShoppingLocal(nextItems);
+        renderShoppingList();
+      }
+    }
+
+    if (event.target.matches("#statusFilter")) {
+      statusUiState.filter = event.target.value;
+      renderPresence();
+    }
+
+    if (event.target.matches("#unknownOnly")) {
+      statusUiState.unknownOnly = event.target.checked;
+      renderPresence();
+    }
+
+    if (event.target.matches('#scheduleForm select[name="eventId"]')) {
+      renderAdmin();
     }
 
   });
@@ -1654,54 +2511,184 @@ function bindEvents() {
     const form = event.currentTarget;
     const text = form.quote.value.trim();
     if (!text) return;
+    const createdBy = localStorage.getItem("woezik-presence-updater") || "Onbekend";
 
-    setQuotes([
-      {
-        text,
-        person: form.person.value,
-        at: new Date().toISOString(),
-      },
-      ...getQuotes(),
-    ]);
+    if (backendEnabled) {
+      saveSharedQuote(text, form.person.value, createdBy)
+        .then(() => refreshQuotes({ silent: true }))
+        .catch((error) => console.error("Quote save failed", error));
+    } else {
+      setQuotes([
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
+          text,
+          person: form.person.value,
+          at: new Date().toISOString(),
+          created_by: createdBy,
+        },
+        ...getQuotes(),
+      ]);
+      renderQuotes();
+      renderAdmin();
+    }
+
     form.reset();
     renderQuoteForm();
-    renderQuotes();
+  });
+
+  document.querySelector("#shoppingForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const label = form.item.value.trim();
+    const addedBy = form.addedBy.value;
+    if (!label) return;
+
+    localStorage.setItem("woezik-presence-updater", addedBy);
+
+    if (backendEnabled) {
+      saveSharedShoppingItem(label, addedBy)
+        .then(() => refreshShopping({ silent: true }))
+        .catch((error) => console.error("Shopping create failed", error));
+    } else {
+      setShoppingLocal([
+        ...getRenderableShopping(),
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
+          label,
+          done: false,
+          createdAt: new Date().toISOString(),
+          createdBy: addedBy,
+          updatedAt: null,
+          updatedBy: null,
+        },
+      ]);
+      renderShoppingList();
+    }
+
+    form.reset();
+    renderShoppingForm();
   });
 
   document.querySelector("#statusForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    const nextEntry = {
-      status: form.status.value,
-      at: new Date().toISOString(),
-    };
-    const presence = getPresence();
-    presence[form.player.value] = nextEntry;
-    setPresence(presence);
-    presenceState.entries = {
-      ...getRenderablePresence(),
-      [form.player.value]: nextEntry,
-    };
-    renderPresence();
-    renderStatusMode();
+    submitPresenceUpdate(form.player.value, form.status.value, form.updatedBy.value);
+  });
 
-    if (backendEnabled) {
-      saveSharedPresence(form.player.value, form.status.value)
-        .then(() => refreshPresence({ silent: true }))
-        .catch((error) => {
-          presenceState.error = true;
-          renderStatusMode();
-          console.error("Presence save failed", error);
-        });
-    }
+  document.querySelector("#homeStatusForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    submitPresenceUpdate(form.player.value, form.status.value, form.updatedBy.value);
   });
 
   document.querySelector("#alertForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const form = event.currentTarget;
-    localStorage.setItem("woezik-alert", form.alert.value.trim());
+    const value = form.alert.value.trim();
+    const siteState = { ...getCurrentSiteState(), home_alert: value };
+    setSiteStateLocal(siteState);
+    sharedState.site = siteState;
     renderHomeLiveBanner();
     renderHomeDashboard();
+
+    if (backendEnabled) {
+      saveSharedSiteState("home_alert", value, "Organisatie")
+        .then(() => refreshSiteState({ silent: true }))
+        .catch((error) => console.error("Alert save failed", error));
+    }
+  });
+
+  document.querySelector("#sleepPlanForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const note = form.sleepPlan.value.trim();
+    const inline = note || "Nog te bepalen";
+    const siteState = {
+      ...getCurrentSiteState(),
+      sleep_plan_note: note || "Deze onderdelen blijven bewust als placeholders staan tot de details zeker zijn.",
+      sleep_plan_inline: inline,
+    };
+    setSiteStateLocal(siteState);
+    sharedState.site = siteState;
+    renderSleepNotes();
+
+    if (backendEnabled) {
+      Promise.all([
+        saveSharedSiteState("sleep_plan_note", siteState.sleep_plan_note, "Organisatie"),
+        saveSharedSiteState("sleep_plan_inline", siteState.sleep_plan_inline, "Organisatie"),
+      ])
+        .then(() => refreshSiteState({ silent: true }))
+        .catch((error) => console.error("Sleep note save failed", error));
+    }
+  });
+
+  document.querySelector("#scheduleForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const currentOverrides = { ...getScheduleOverrides() };
+    currentOverrides[form.eventId.value] = {
+      time: form.time.value.trim(),
+      title: form.title.value.trim(),
+      text: form.text.value.trim(),
+    };
+    const siteState = { ...getCurrentSiteState(), schedule_overrides: currentOverrides };
+    setSiteStateLocal(siteState);
+    sharedState.site = siteState;
+    renderSchedule();
+    renderNextEvent();
+    renderAdmin();
+
+    if (backendEnabled) {
+      saveSharedSiteState("schedule_overrides", currentOverrides, "Organisatie")
+        .then(() => refreshSiteState({ silent: true }))
+        .catch((error) => console.error("Schedule save failed", error));
+    }
+  });
+
+  document.querySelector("#resetScheduleOverride")?.addEventListener("click", () => {
+    const form = document.querySelector("#scheduleForm");
+    if (!form) return;
+
+    const currentOverrides = { ...getScheduleOverrides() };
+    delete currentOverrides[form.eventId.value];
+    const siteState = { ...getCurrentSiteState(), schedule_overrides: currentOverrides };
+    setSiteStateLocal(siteState);
+    sharedState.site = siteState;
+    renderSchedule();
+    renderNextEvent();
+    renderAdmin();
+
+    if (backendEnabled) {
+      saveSharedSiteState("schedule_overrides", currentOverrides, "Organisatie")
+        .then(() => refreshSiteState({ silent: true }))
+        .catch((error) => console.error("Schedule reset failed", error));
+    }
+  });
+
+  document.querySelector("#resetSharedStatus")?.addEventListener("click", () => {
+    if (!backendEnabled) {
+      setPresence({});
+      presenceState.entries = {};
+      renderPresence();
+      return;
+    }
+
+    resetSharedPresence()
+      .then(() => refreshPresence({ silent: true }))
+      .catch((error) => console.error("Presence reset failed", error));
+  });
+
+  document.querySelector("#resetSharedTasks")?.addEventListener("click", () => {
+    if (!backendEnabled) {
+      setTasksLocal({});
+      renderTasks();
+      renderHomeDashboard();
+      return;
+    }
+
+    resetSharedTasks()
+      .then(() => refreshTasks({ silent: true }))
+      .catch((error) => console.error("Task reset failed", error));
   });
 
   document.querySelector("#authForm")?.addEventListener("submit", (event) => {
@@ -1723,7 +2710,7 @@ function bindEvents() {
     setActivePage("home");
   });
 
-  document.querySelector("#photoInput").addEventListener("change", (event) => {
+  document.querySelector("#photoInput")?.addEventListener("change", (event) => {
     const files = Array.from(event.target.files).slice(0, 8);
     const readers = files.map(
       (file) =>
@@ -1749,18 +2736,26 @@ function bindEvents() {
 
 function init() {
   syncAccessState();
+  sharedState.site = getSiteStateLocal();
+  sharedState.tasks = getTasksLocal();
+  sharedState.shopping = getShoppingLocal();
+  sharedState.quotes = getQuotes();
   renderSchedule();
   renderNextEvent();
   renderHomeLiveBanner();
   renderHomeDashboard();
   renderPlayers();
   renderPackingList();
+  renderTaskMode();
   renderTasks();
   renderMealPlan();
+  renderShoppingMode();
+  renderShoppingForm();
   renderShoppingList();
   renderRules();
   renderBingo();
   renderCars();
+  renderSleepNotes();
   renderQuoteForm();
   renderQuotes();
   renderEventPage("dodenstraal", "#dodenstraalInfo");
@@ -1777,6 +2772,19 @@ function init() {
   updateCountdown();
   bindEvents();
   startPresencePolling();
+  startSharedPolling();
+
+  refreshSiteState({ silent: true }).then(() => {
+    renderSleepNotes();
+    renderHomeLiveBanner();
+    renderHomeDashboard();
+    renderSchedule();
+    renderNextEvent();
+    renderAdmin();
+  });
+  refreshTasks({ silent: true });
+  refreshShopping({ silent: true });
+  refreshQuotes({ silent: true });
 
   const initialPage = location.hash.replace("#", "") || "home";
   if (document.querySelector(`[data-page="${initialPage}"]`) && canAccessPage(initialPage)) {

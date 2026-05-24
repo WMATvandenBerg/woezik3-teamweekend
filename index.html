@@ -7,7 +7,6 @@
     <title>Woezik 3 - Team Weekend</title>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="woezik-logo.png">
-    <link rel="preconnect" href="https://images.unsplash.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -20,7 +19,7 @@
       <span></span>
     </div>
     <header class="topbar">
-      <a class="brand" href="#home" aria-label="Woezik 3 home">
+      <a class="brand" href="#home" data-jump="home" aria-label="Woezik 3 home">
         <span class="brand-mark"><img src="woezik-logo.png" alt=""></span>
         <span>
           <strong>Woezik 3</strong>
@@ -49,23 +48,6 @@
 
         <section class="home-live-banner" id="homeLiveBanner" data-access="organizer"></section>
 
-        <div class="ticker" aria-label="Weekend highlights">
-          <div>
-            <span>Woezik 3</span>
-            <span>België</span>
-            <span>Huisfestival</span>
-            <span>Dodenstraal</span>
-            <span>Pubquiz</span>
-            <span>Derde helft</span>
-            <span>Woezik 3</span>
-            <span>België</span>
-            <span>Huisfestival</span>
-            <span>Dodenstraal</span>
-            <span>Pubquiz</span>
-            <span>Derde helft</span>
-          </div>
-        </div>
-
         <div class="quick-grid">
           <article class="stat-card">
             <span>Unlock over</span>
@@ -89,32 +71,7 @@
           </article>
         </div>
 
-        <section class="content-block" data-access="organizer">
-          <div class="section-heading">
-            <p class="eyebrow">Live</p>
-            <h2>Eerstvolgende op het programma</h2>
-          </div>
-          <article class="next-card" id="nextEvent"></article>
-        </section>
-
-        <section class="content-block live-deck" data-access="organizer">
-          <div class="section-heading">
-            <p class="eyebrow">Vandaag</p>
-            <h2>Nu belangrijk</h2>
-          </div>
-          <div class="home-dashboard" id="homeDashboard"></div>
-        </section>
-
         <section class="action-strip" id="homeActions"></section>
-
-        <section class="content-block match-card" data-access="organizer">
-          <div>
-            <p class="eyebrow">Teamstatus</p>
-            <h2>Jacco, Chiel en Wessel houden het schema overeind.</h2>
-            <p>Twee auto's gaan zondag terug en drie blijven tot maandag. Slaapindeling, wifi en definitieve activiteitdetails volgen.</p>
-          </div>
-          <img src="woezik-logo.png" alt="">
-        </section>
 
         <section class="install-note">
           <strong>Tip voor in België</strong>
@@ -135,15 +92,18 @@
         <div class="page-title">
           <p class="eyebrow">Heenreis</p>
           <h1>Route & aankomst</h1>
-          <p>Eerste groep arriveert vrijdag rond 13:00 - 13:30 uur. Daarna druppelt de rest binnen.</p>
+          <p>Aankomst is vrijdag vanaf 17:00. Daarna druppelt de rest binnen en kan de eerste avond direct lopen.</p>
         </div>
-        <article class="feature-card map-card">
-          <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80" alt="Routekaart en reisplanning">
+        <article class="feature-card map-card route-card-plain">
           <div>
             <span class="tag">Nieuwe locatie</span>
             <h2>Vaux-sur-Sûre, Belgische Ardennen</h2>
             <p>De accommodatie ligt in de regio Durbuy - La Roche - Bastogne. De Belvilla-link blijft handig voor de boeking; navigatie en laatste praktische details zetten we hier neer.</p>
-            <a class="primary-link" href="https://www.belvilla.nl/be/100001893/?checkin=26%2F05%2F2026&checkout=29%2F05%2F2026&rooms=1&guests=15&rooms_config=1-15&flexibleDaysCount=3&selected_rcid=1" target="_blank" rel="noreferrer">Open Belvilla link</a>
+            <div class="route-actions">
+              <a class="primary-link" href="https://www.belvilla.nl/be/100001893/?checkin=26%2F05%2F2026&checkout=29%2F05%2F2026&rooms=1&guests=15&rooms_config=1-15&flexibleDaysCount=3&selected_rcid=1" target="_blank" rel="noreferrer">Open Belvilla</a>
+              <a class="ghost-button subtle" href="#autos" data-jump="autos">Check auto's</a>
+              <a class="ghost-button subtle" href="#nood" data-jump="nood">Noodinfo</a>
+            </div>
           </div>
         </article>
         <div class="info-grid">
@@ -236,20 +196,11 @@
           <div><span>Spelruimte</span><strong>Biljart, tafelvoetbal, darten, spelcomputer en projectiescherm</strong></div>
           <div><span>Buiten</span><strong>Tuin, barbecue, tuinmeubilair, speeltoestellen en jeu de boules-baan</strong></div>
           <div><span>Handig</span><strong>Wasmachine, droger, afwasmachine, fietsen en fietsenberging</strong></div>
-          <div><span>Slaapindeling</span><strong>Nog te bepalen</strong></div>
+          <div><span>Slaapindeling</span><strong id="sleepPlanInline">Nog te bepalen</strong></div>
           <div><span>Organisatie</span><strong>Jacco, Chiel en Wessel</strong></div>
           <div><span>Supermarkt</span><strong>Boodschappenteam checkt lokaal</strong></div>
           <div><span>Huisregel</span><strong>Wie iets sloopt, meldt het voor de groepsapp het doet</strong></div>
         </div>
-      </section>
-
-      <section id="team" class="panel" data-page="team" data-access="organizer">
-        <div class="page-title">
-          <p class="eyebrow">Selectie</p>
-          <h1>De reizende selectie</h1>
-          <p>Spelerskaarten met weekendrollen. Details kunnen later harder, fouter en persoonlijker.</p>
-        </div>
-        <div class="player-grid" id="players"></div>
       </section>
 
       <section id="paklijst" class="panel" data-page="paklijst" data-access="public">
@@ -269,8 +220,9 @@
         <div class="page-title">
           <p class="eyebrow">Draaiboek</p>
           <h1>Taken</h1>
-          <p>Afvinken wat geregeld is. De verdeling is voorlopig en lokaal aanpasbaar in de code.</p>
+          <p>Afvinken wat geregeld is. Met backend actief is dit bord gedeeld voor iedereen.</p>
         </div>
+        <div class="mode-note" id="taskMode"></div>
         <div class="task-board" id="taskBoard"></div>
       </section>
 
@@ -278,18 +230,9 @@
         <div class="page-title">
           <p class="eyebrow">Voorraadbeheer</p>
           <h1>Eten & drinken</h1>
-          <p>Maaltijden, boodschappen en geldzaken op een plek.</p>
+          <p>Maaltijden en geldzaken op een plek.</p>
         </div>
         <div class="meal-grid" id="mealPlan"></div>
-        <section class="content-block">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Boodschappen</p>
-              <h2>Voorlopige lijst</h2>
-            </div>
-          </div>
-          <div class="shopping-list" id="shoppingList"></div>
-        </section>
         <div class="info-grid">
           <article>
             <h3>Budget</h3>
@@ -300,6 +243,27 @@
             <p>Link volgt. Betaalstatus houden we voorlopig buiten de site.</p>
           </article>
         </div>
+      </section>
+
+      <section id="boodschappen" class="panel" data-page="boodschappen" data-access="organizer">
+        <div class="page-title">
+          <p class="eyebrow">Supermarkt</p>
+          <h1>Boodschappen</h1>
+          <p>Gedeelde lijst voor toevoegen, afvinken en wegstrepen tijdens het weekend.</p>
+        </div>
+        <div class="mode-note" id="shoppingMode"></div>
+        <form class="shopping-form" id="shoppingForm">
+          <label>
+            <span>Nieuw item</span>
+            <input type="text" name="item" placeholder="Bijv. extra ijs, brood of houtskool" required>
+          </label>
+          <label>
+            <span>Toegevoegd door</span>
+            <select name="addedBy" aria-label="Toegevoegd door"></select>
+          </label>
+          <button class="small-button" type="submit">Toevoegen</button>
+        </form>
+        <div class="shopping-list" id="shoppingList"></div>
       </section>
 
       <section id="regels" class="panel" data-page="regels" data-access="organizer">
@@ -339,10 +303,37 @@
         </div>
         <div class="mode-note status-mode" id="statusMode"></div>
         <form class="status-form" id="statusForm">
-          <select name="player" aria-label="Speler"></select>
-          <select name="status" aria-label="Status"></select>
+          <label>
+            <span>Speler</span>
+            <select name="player" aria-label="Speler"></select>
+          </label>
+          <label>
+            <span>Status</span>
+            <select name="status" aria-label="Status"></select>
+          </label>
+          <label>
+            <span>Bijgewerkt door</span>
+            <select name="updatedBy" aria-label="Bijgewerkt door"></select>
+          </label>
           <button class="small-button" type="submit">Update</button>
         </form>
+        <div class="status-filters">
+          <select id="statusFilter" aria-label="Filter status">
+            <option value="all">Alle statussen</option>
+          </select>
+          <label class="toggle-item">
+            <input type="checkbox" id="unknownOnly">
+            <span>Alleen nog onbekend</span>
+          </label>
+        </div>
+        <div class="info-grid compact" id="presenceSummary"></div>
+        <section class="content-block compact-block">
+          <div class="section-heading">
+            <p class="eyebrow">Recent</p>
+            <h2>Laatste wijzigingen</h2>
+          </div>
+          <div class="recent-list" id="presenceRecent"></div>
+        </section>
         <div class="status-grid" id="statusGrid"></div>
       </section>
 
@@ -364,10 +355,48 @@
             </label>
             <button class="small-button" type="submit">Alert opslaan</button>
           </form>
+          <form class="admin-form" id="sleepPlanForm">
+            <label>
+              <span>Slaapindeling notitie</span>
+              <textarea name="sleepPlan" rows="3" placeholder="Bijv. Kamer 1: ... / wifi volgt later"></textarea>
+            </label>
+            <button class="small-button" type="submit">Slaapnotitie opslaan</button>
+          </form>
+          <form class="admin-form" id="scheduleForm">
+            <label>
+              <span>Programma-item</span>
+              <select name="eventId" aria-label="Programma-item"></select>
+            </label>
+            <label>
+              <span>Tijd</span>
+              <input type="text" name="time" placeholder="Bijv. 18:30">
+            </label>
+            <label>
+              <span>Titel</span>
+              <input type="text" name="title" placeholder="Bijv. BBQ">
+            </label>
+            <label>
+              <span>Omschrijving</span>
+              <textarea name="text" rows="3" placeholder="Omschrijving van dit programma-item"></textarea>
+            </label>
+            <div class="admin-actions split">
+              <button class="small-button" type="submit">Programma opslaan</button>
+              <button class="ghost-button subtle" type="button" id="resetScheduleOverride">Reset item</button>
+            </div>
+          </form>
+          <section class="content-block compact-block">
+            <div class="section-heading">
+              <p class="eyebrow">Quotes</p>
+              <h2>Beheren</h2>
+            </div>
+            <div class="admin-quote-list" id="adminQuoteList"></div>
+          </section>
           <div class="admin-actions">
             <button type="button" data-jump="programma">Programma</button>
             <button type="button" data-jump="autos">Auto's</button>
             <button type="button" data-jump="status">Status</button>
+            <button type="button" id="resetSharedStatus">Status resetten</button>
+            <button type="button" id="resetSharedTasks">Taken resetten</button>
             <button type="button" id="clearLocalData">Reset lokale data</button>
           </div>
         </div>
@@ -383,7 +412,7 @@
           <article>
             <span class="tag">Organisatie</span>
             <h2>Jacco, Chiel en Wessel</h2>
-            <p>Programma, planning, quiz, taken en de algemene poging om het weekend net genoeg structuur te geven.</p>
+            <p>Programma, planning, taken en de algemene poging om het weekend net genoeg structuur te geven.</p>
           </article>
           <article>
             <span class="tag">Vervoer</span>
@@ -398,7 +427,7 @@
           <article>
             <span class="tag">Volgt</span>
             <h2>Slaapindeling, wifi en accommodatie-info</h2>
-            <p>Deze onderdelen blijven bewust als placeholders staan tot de details zeker zijn.</p>
+            <p id="sleepPlanNote">Slaapindeling en wifi volgen nog. Programmalijn voor zaterdag en zondag staat wel vast.</p>
           </article>
           <article>
             <span class="tag">Accommodatie</span>
@@ -442,77 +471,45 @@
 
       <section id="festival" class="panel" data-page="festival" data-access="organizer">
         <div class="page-title">
-          <p class="eyebrow">Zaterdag</p>
+          <p class="eyebrow">Zondag</p>
           <h1>Huisfestival</h1>
-          <p>Muziek, spellen, DJ-slots en punten pakken bij de accommodatie.</p>
+          <p>Muziek, spellen en DJ-slots bij de accommodatie.</p>
         </div>
         <div class="event-grid" id="festivalInfo"></div>
       </section>
 
       <section id="activiteit" class="panel" data-page="activiteit" data-access="organizer">
         <div class="page-title">
-          <p class="eyebrow">Zondag</p>
-          <h1>Activiteit</h1>
-          <p>Sniper Zone in Malmedy ligt vast. De exacte onderdelen die we daar doen volgen nog.</p>
+          <p class="eyebrow">Zaterdag</p>
+          <h1>Buitenactiviteiten</h1>
+          <p>Outdoor Dag via Ardennen.nl. Voor jullie groep staan mountainbiken en kanoen op het programma.</p>
         </div>
         <div class="event-grid" id="activityInfo"></div>
-      </section>
-
-      <section id="quiz" class="panel" data-page="quiz" data-access="organizer">
-        <div class="page-title">
-          <p class="eyebrow">Zaterdagavond</p>
-          <h1>Pubquiz</h1>
-          <p>Rondes van Jacco, Chiel en Wessel. De inhoud kan later scherper, fouter en persoonlijker.</p>
-        </div>
-        <div class="quiz-grid" id="quizRounds"></div>
-        <section class="content-block">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Teamfeitjes</p>
-              <h2>Random feitje</h2>
-            </div>
-            <button class="small-button" id="newFact" type="button">Nieuwe</button>
-          </div>
-          <article class="fact-card" id="randomFact"></article>
-        </section>
-      </section>
-
-      <section id="media" class="panel" data-page="media" data-access="organizer">
-        <div class="page-title">
-          <p class="eyebrow">Bewijsmateriaal</p>
-          <h1>Foto's & momenten</h1>
-          <p>Upload hier foto's voor je eigen overzicht. Met backend-config kunnen ze ook naar gedeelde opslag.</p>
-        </div>
-        <label class="upload-box">
-          <input id="photoInput" type="file" accept="image/*" multiple>
-          <span>Foto's kiezen</span>
-          <small>Wordt op dit apparaat bewaard</small>
-        </label>
-        <div class="photo-grid" id="photoGrid"></div>
       </section>
 
       <section id="meer" class="panel" data-page="meer" data-access="organizer">
         <div class="page-title">
           <p class="eyebrow">Alles bij elkaar</p>
           <h1>Meer</h1>
-          <p>Praktische info voor vervoer, eten, regels, noodzaken en latere aanvullingen.</p>
+          <p>Eerst wat je direct nodig hebt, daarna organisatie, planning en de rest van het weekendspul.</p>
         </div>
         <div class="menu-list">
+          <button data-jump="nood"><span>Noodinfo</span><small>Adres en contactpunten</small></button>
+          <button data-jump="locatie"><span>Locatie</span><small>Basecamp, wifi en huisregels</small></button>
           <button data-jump="route"><span>Route & aankomst</span><small>Adres, aankomst en vertrek</small></button>
           <button data-jump="autos"><span>Auto's</span><small>Chauffeurs en indeling</small></button>
-          <button data-jump="info"><span>Weekendinfo</span><small>Organisatie, vervoer en open punten</small></button>
-          <button data-jump="taken"><span>Taken</span><small>Boodschappen, eten, festival en opruimen</small></button>
-          <button data-jump="eten"><span>Eten & drinken</span><small>Maaltijden, boodschappen en budget</small></button>
-          <button data-jump="paklijst"><span>Paklijst</span><small>Persoonlijke checklist</small></button>
-          <button data-jump="checkout"><span>Check-out</span><small>Maandagochtend checklist</small></button>
           <button data-jump="status"><span>Waar is iedereen?</span><small>Status zonder GPS</small></button>
-          <button data-jump="admin"><span>Admin</span><small>Alerts en snelle reset</small></button>
-          <button data-jump="locatie"><span>Locatie</span><small>Basecamp, wifi en huisregels</small></button>
-          <button data-jump="regels"><span>Regels</span><small>Borg, chauffeurs en gezond verstand</small></button>
-          <button data-jump="quotes"><span>Quotes</span><small>Quote van het weekend</small></button>
+          <button data-jump="boodschappen"><span>Boodschappen</span><small>Gedeelde supermarkt-lijst</small></button>
+          <button data-jump="eten"><span>Eten & drinken</span><small>Maaltijden en budget</small></button>
+          <button data-jump="paklijst"><span>Paklijst</span><small>Persoonlijke checklist</small></button>
+          <button data-jump="taken"><span>Taken</span><small>Boodschappen, eten, festival en opruimen</small></button>
+          <button data-jump="info"><span>Weekendinfo</span><small>Organisatie, vervoer en open punten</small></button>
+          <button data-jump="activiteit"><span>Buitenactiviteiten</span><small>Zaterdag: mountainbiken en kanoen</small></button>
           <button data-jump="dodenstraal"><span>Dodenstraal</span><small>Regels, veiligheid en speluitleg</small></button>
-          <button data-jump="activiteit"><span>Zondagactiviteit</span><small>Locatie en planning volgen</small></button>
-          <button data-jump="nood"><span>Noodinfo</span><small>Adres en contactpunten</small></button>
+          <button data-jump="regels"><span>Regels</span><small>Borg, chauffeurs en gezond verstand</small></button>
+          <button data-jump="checkout"><span>Check-out</span><small>Maandagochtend checklist</small></button>
+          <button data-jump="quotes"><span>Quotes</span><small>Quote van het weekend</small></button>
+          <button data-jump="admin"><span>Admin</span><small>Alerts en snelle reset</small></button>
         </div>
       </section>
 

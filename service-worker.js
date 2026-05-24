@@ -1,4 +1,4 @@
-const CACHE_NAME = "woezik-weekend-v54";
+const CACHE_NAME = "woezik-weekend-v72";
 const APP_SHELL = [
   "./",
   "./index.html",
