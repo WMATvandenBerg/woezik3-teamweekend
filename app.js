@@ -760,6 +760,19 @@ function renderUnlockGate() {
   `;
 }
 
+function updateUnlockTimer(diff) {
+  const timer = document.querySelector(".unlock-public .unlock-timer");
+  if (!timer) return;
+
+  const { days, hours, minutes } = formatUnlockParts(diff);
+  const values = timer.querySelectorAll("strong");
+  if (values.length < 3) return;
+
+  values[0].textContent = String(days);
+  values[1].textContent = String(hours);
+  values[2].textContent = String(minutes);
+}
+
 function renderAccessShell() {
   applyAccessVisibility();
   renderHeroState();
@@ -1510,8 +1523,8 @@ function updateCountdown() {
   if (!countdown) return;
 
   countdown.textContent = formatUnlockLabel(diff);
-  if (!appState.isOrganizer || appState.isUnlocked) {
-    renderUnlockGate();
+  if (!appState.isOrganizer && !appState.isUnlocked) {
+    updateUnlockTimer(diff);
   }
 
   if (syncAccessState()) {
