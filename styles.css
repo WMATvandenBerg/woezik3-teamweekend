@@ -643,6 +643,10 @@ p {
   border: 1px solid var(--event-line);
 }
 
+.location-title-link {
+  margin-top: 14px;
+}
+
 .action-strip button:nth-child(2),
 .action-strip button:nth-child(4) {
   color: var(--ink);
