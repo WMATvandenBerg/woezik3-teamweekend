@@ -1,0 +1,17 @@
+{
+  "name": "Woezik 3 - Team Weekend",
+  "short_name": "Woezik 3",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#004A9A",
+  "description": "Mobiel weekendplatform voor Woezik 3.",
+  "icons": [
+    {
+      "src": "woezik-logo.png",
+      "sizes": "266x300",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
