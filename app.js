@@ -195,12 +195,13 @@ const presenceState = {
   loading: false,
   error: false,
 };
-const publicPages = ["home", "autos", "paklijst"];
+const publicPages = ["home", "autos", "paklijst", "locatie"];
 const publicHomeActions = [
   { id: "autos", label: "Auto's" },
   { id: "paklijst", label: "Paklijst" },
 ];
 const organizerHomeActions = [
+  { id: "status", label: "Status" },
   { id: "programma", label: "Programma" },
   { id: "route", label: "Route" },
   { id: "autos", label: "Auto's" },
@@ -209,6 +210,7 @@ const organizerHomeActions = [
 const publicNavItems = [
   { id: "home", label: "Home" },
   { id: "autos", label: "Auto's" },
+  { id: "locatie", label: "Locatie" },
   { id: "paklijst", label: "Paklijst" },
 ];
 const organizerNavItems = [

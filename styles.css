@@ -4947,6 +4947,7 @@ main {
 @media (max-width: 760px) {
   .hero-panel .hero-copy {
     max-width: calc(100% - 16px);
+    min-width: 0;
     padding-right: 10px;
   }
 
@@ -4957,6 +4958,11 @@ main {
     letter-spacing: -0.035em;
     word-break: break-word;
     overflow-wrap: anywhere;
+  }
+
+  .ticker {
+    width: 100%;
+    margin: 0;
   }
 }
 
@@ -6046,8 +6052,15 @@ main {
 }
 
 @media (max-width: 760px) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+
   .hero-panel {
     gap: 12px;
+    width: 100%;
+    min-width: 0;
   }
 
   .hero-image {
@@ -6063,6 +6076,7 @@ main {
     z-index: 2;
     margin: 0;
     padding: 12px 12px 14px;
+    min-width: 0;
   }
 
   .hero-copy .eyebrow {
@@ -6118,6 +6132,38 @@ main {
   .hero-meta strong {
     font-size: 0.88rem;
     line-height: 1.18;
+  }
+
+  .hero-panel > .hero-image,
+  .hero-panel > #unlockGate,
+  .hero-panel > .home-live-banner,
+  .hero-panel > .ticker,
+  .hero-panel > .quick-grid,
+  .hero-panel > .content-block,
+  .hero-panel > .action-strip,
+  .hero-panel > .match-card,
+  .hero-panel > .install-note,
+  .hero-panel .unlock-card,
+  .hero-panel .live-banner-card,
+  .hero-panel .next-card,
+  .hero-panel .home-dashboard,
+  .hero-panel .stat-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .quick-grid,
+  .home-dashboard,
+  .action-strip {
+    min-width: 0;
+  }
+
+  .quick-grid > *,
+  .home-dashboard > *,
+  .action-strip > * {
+    min-width: 0;
   }
 }
 
