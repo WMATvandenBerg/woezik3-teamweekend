@@ -688,19 +688,19 @@ function renderHeroState() {
   meta.innerHTML = `
     <div>
       <span>Open nu</span>
-      <strong>Paklijst en auto's</strong>
+      <strong>Paklijst, auto's en locatie</strong>
     </div>
     <div>
       <span>Later zichtbaar</span>
-      <strong>Locatie, planning, verrassingen</strong>
+      <strong>Planning en verrassingen</strong>
     </div>
     <div>
       <span>Unlock</span>
       <strong>Vrijdag 17:00</strong>
     </div>
   `;
-  contextLabel.textContent = "Status";
-  contextValue.textContent = "Locatie locked";
+  contextLabel.textContent = "Locatie";
+  contextValue.textContent = "Vaux-sur-Sure";
 }
 
 function renderHomeActions() {
